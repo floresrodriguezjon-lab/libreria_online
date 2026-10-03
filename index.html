@@ -137,6 +137,17 @@ footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .chat-in input{flex:1;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:.6rem .9rem;min-width:0}
 .chat-in button{background:var(--cochinilla);color:#fff;border:0;border-radius:20px;padding:0 1rem;font:inherit;font-weight:700;cursor:pointer}
 
+.head-acc{display:flex;align-items:center;gap:.25rem}
+.asesor{font-size:.85rem;font-weight:700;color:#fff;background:#1F8F55;border-radius:16px;padding:.3rem .7rem;text-decoration:none;white-space:nowrap}
+.m.bot a{color:var(--anil);font-weight:700}
+.m.bot strong{font-weight:700}
+.typing{display:flex;gap:5px;padding:.8rem .9rem}
+.typing span{width:8px;height:8px;border-radius:50%;background:var(--muted);animation:pulso 1s infinite ease-in-out}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes pulso{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.typing span{animation:none;opacity:.6}}
+.chat-in button:disabled{opacity:.55;cursor:wait}
+
 @media (max-width:820px){
   .hero .wrap,.contacto .wrap{grid-template-columns:1fr}
   .estante{height:180px}
@@ -267,8 +278,11 @@ footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 <button class="chat-toggle" id="chatToggle" aria-expanded="false" aria-controls="chat"><span class="dot"></span>¿Tienes una pregunta?</button>
 <div class="chat" id="chat" role="dialog" aria-label="Asistente de Librerías Andinas">
   <div class="chat-head">
-    <div><strong>Asistente Andino</strong><small>Respondo al instante</small></div>
-    <button type="button" id="chatCerrar" aria-label="Cerrar chat">×</button>
+    <div><strong>Asistente Andino</strong><small>Te respondo al instante</small></div>
+    <div class="head-acc">
+      <a id="chatWa" href="#" target="_blank" rel="noopener" class="asesor">Asesor por WhatsApp</a>
+      <button type="button" id="chatCerrar" aria-label="Cerrar chat">×</button>
+    </div>
   </div>
   <div class="faja" role="presentation"></div>
   <div class="msgs" id="msgs" aria-live="polite"></div>
@@ -281,38 +295,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 <script>
 /* ====== EDITA AQUÍ LOS DATOS DE TU NEGOCIO ====== */
 const CONFIG = {
+  n8nChatUrl: "https://jonathaneliel.app.n8n.cloud/webhook/libreria-chat-agente-0001/chat",
   whatsapp: "51961550156",
   correo: "flores.rodriguez.jon@gmail.com",
   horario: "Lunes a sábado de 9:00 a.m. a 8:00 p.m. Domingos de 10:00 a.m. a 2:00 p.m.",
   direccion: "Av. Principal 123, Cercado (actualiza con tu dirección real)",
-  costoEnvio: "Lima y ciudad: desde S/ 8. Provincias: por Olva o Shalom, desde S/ 15."
+  bienvenida: "¡Hola! Soy el asistente de Librerías Andinas 📚\n¿Qué libro buscas o en qué te puedo ayudar?"
 };
 
-/* ====== LAS 10 PREGUNTAS DEL CHATBOT ====== */
-const FAQ = [
-  { q:"¿Cuál es su horario de atención?", k:["horario","hora","abren","cierran","atienden","domingo","sabado","sábado"],
-    a:()=>"Atendemos: " + CONFIG.horario },
-  { q:"¿Dónde están ubicados?", k:["donde","dónde","ubicacion","ubicación","direccion","dirección","tienda","local","llegar"],
-    a:()=>"Nuestra tienda está en " + CONFIG.direccion + "." },
-  { q:"¿Hacen envíos a domicilio o provincias?", k:["envio","envío","delivery","domicilio","provincia","enviar","despacho","shalom","olva"],
-    a:()=>"Sí, enviamos a todo el Perú. " + CONFIG.costoEnvio + " El tiempo de entrega es de 1 a 4 días hábiles según el destino." },
-  { q:"¿Qué métodos de pago aceptan?", k:["pago","pagar","yape","plin","tarjeta","transferencia","efectivo","deposito","depósito"],
-    a:()=>"Aceptamos Yape, Plin, transferencia bancaria, tarjetas de débito/crédito en tienda y efectivo." },
-  { q:"¿Venden textos escolares y listas completas?", k:["escolar","lista","colegio","primaria","secundaria","inicial","utiles","útiles","texto"],
-    a:()=>"Sí. Envíanos una foto de tu lista escolar y te cotizamos todo: libros, cuadernos y útiles. También ofrecemos forrado y etiquetado." },
-  { q:"¿Puedo pedir un libro que no tienen en stock?", k:["stock","pedido especial","encargo","conseguir","no tienen","agotado","importado","buscar"],
-    a:()=>"Claro. Hacemos pedidos especiales de libros nacionales e importados. Dinos el título, autor o ISBN y te confirmamos precio y tiempo de llegada." },
-  { q:"¿Tienen precios por mayor para colegios?", k:["mayor","mayorista","colegio","institucion","institución","empresa","factura","volumen","descuento por cantidad"],
-    a:()=>"Sí, tenemos precios especiales para colegios, academias, empresas y compras por volumen. Emitimos boleta y factura electrónica." },
-  { q:"¿Aceptan cambios o devoluciones?", k:["cambio","devolucion","devolución","devolver","fallado","defecto","garantia","garantía","reclamo"],
-    a:()=>"Aceptamos cambios dentro de los 7 días con tu comprobante, siempre que el producto esté en buen estado. Si el libro tiene fallas de fábrica, lo cambiamos sin costo." },
-  { q:"¿Tienen promociones o descuentos?", k:["promocion","promoción","oferta","descuento","rebaja","campaña","cupón","cupon"],
-    a:()=>"Tenemos promociones en campaña escolar, Día del Libro y fin de año. Escríbenos por WhatsApp para enterarte de las ofertas vigentes." },
-  { q:"¿Cómo hago un pedido o hablo con un asesor?", k:["pedido","comprar","asesor","humano","persona","contacto","whatsapp","correo","hablar","cotizar","cotización"],
-    a:()=>"Déjame tus datos y te conecto con un asesor por WhatsApp o correo.", lead:true }
-];
-
-/* ====== Lógica ====== */
 const $ = s => document.querySelector(s);
 $("#horarioTxt").textContent = CONFIG.horario;
 $("#direccionTxt").textContent = CONFIG.direccion;
@@ -321,8 +311,9 @@ $("#anio").textContent = new Date().getFullYear();
 const waLink = t => "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(t);
 const mailLink = (asunto, t) => "mailto:" + CONFIG.correo + "?subject=" + encodeURIComponent(asunto) + "&body=" + encodeURIComponent(t);
 const abrir = url => { const w = window.open(url, "_blank", "noopener"); if (!w) location.href = url; };
+$("#chatWa").href = waLink("Hola Librerías Andinas 👋, quiero hablar con un asesor.");
 
-/* Formulario de contacto */
+/* ====== Formulario de contacto (WhatsApp / correo) ====== */
 $("#formContacto").addEventListener("click", e => {
   const b = e.target.closest("button[data-canal]"); if (!b) return;
   const n = $("#fNombre").value.trim(), t = $("#fTel").value.trim(), m = $("#fMsg").value.trim(), tipo = $("#fTipo").value;
@@ -333,26 +324,80 @@ $("#formContacto").addEventListener("click", e => {
   abrir(b.dataset.canal === "wa" ? waLink(texto) : mailLink("Consulta web: " + tipo, texto));
 });
 
-/* Chatbot */
+/* ====== Chatbot conectado a n8n ====== */
 const chat = $("#chat"), msgs = $("#msgs"), toggle = $("#chatToggle");
-let iniciado = false, lead = null; // lead = {paso, nombre, telefono}
+const input = $("#chatInput"), sendBtn = $("#chatForm button");
+let iniciado = false, ocupado = false;
 
+/* Sesión: el agente de n8n usa este ID para recordar la conversación */
+function nuevoId(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "s-" + Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+let sessionId;
+try { sessionId = sessionStorage.getItem("la_session") || nuevoId(); sessionStorage.setItem("la_session", sessionId); }
+catch(e){ sessionId = nuevoId(); }
+
+/* Markdown sencillo y seguro (negritas, cursivas, enlaces, listas) */
+function md(txt){
+  let h = String(txt).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  h = h.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  h = h.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+  h = h.replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>");
+  h = h.replace(/^\s*[-•]\s+/gm,"• ");
+  return h;
+}
 function burbuja(txt, quien="bot"){
-  const d = document.createElement("div"); d.className = "m " + quien; d.textContent = txt;
-  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+  const d = document.createElement("div"); d.className = "m " + quien;
+  if (quien === "bot") d.innerHTML = md(txt); else d.textContent = txt;
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d;
 }
-function chips(){
-  const c = document.createElement("div"); c.className = "chips";
-  FAQ.forEach((f,i)=>{ const b=document.createElement("button"); b.type="button"; b.className="chip"+(f.lead?" fuerte":""); b.textContent=f.q; b.onclick=()=>responder(i,true); c.appendChild(b); });
-  msgs.appendChild(c); msgs.scrollTop = msgs.scrollHeight;
+function escribiendo(){
+  const d = document.createElement("div"); d.className = "m bot typing"; d.setAttribute("aria-label","El asistente está escribiendo");
+  d.innerHTML = "<span></span><span></span><span></span>";
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d;
 }
+
+/* Lee la respuesta de n8n: JSON normal o streaming (líneas JSON) */
+function leerRespuesta(raw){
+  try {
+    let j = JSON.parse(raw);
+    if (Array.isArray(j)) j = j[0] || {};
+    return j.output ?? j.text ?? j.response ?? j.message ?? (typeof j === "string" ? j : "");
+  } catch(e){
+    let out = "";
+    raw.split("\n").forEach(l => { try { const j = JSON.parse(l); if (j.type === "item" && j.content) out += j.content; } catch(_){} });
+    return out || raw;
+  }
+}
+
+async function enviarMensaje(texto){
+  ocupado = true; sendBtn.disabled = true;
+  const t = escribiendo();
+  try {
+    const res = await fetch(CONFIG.n8nChatUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "sendMessage", sessionId, chatInput: texto })
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const respuesta = leerRespuesta(await res.text()).trim();
+    t.remove();
+    burbuja(respuesta || "No recibí respuesta del asistente. Intenta de nuevo o escríbenos por WhatsApp.");
+  } catch(err){
+    console.error("Error n8n:", err);
+    t.remove();
+    burbuja("No pude conectarme con el asistente en este momento. Puedes escribirnos directo por [WhatsApp](" + waLink("Hola Librerías Andinas 👋, tengo una consulta: " + texto) + ").");
+  } finally {
+    ocupado = false; sendBtn.disabled = false; input.focus();
+  }
+}
+
 function abrirChat(){
   chat.classList.add("open"); toggle.setAttribute("aria-expanded","true");
-  if (!iniciado){ iniciado = true;
-    burbuja("¡Hola! Soy el asistente de Librerías Andinas 📚\nElige una pregunta o escríbela con tus palabras.");
-    chips();
-  }
-  setTimeout(()=>$("#chatInput").focus(), 50);
+  if (!iniciado){ iniciado = true; burbuja(CONFIG.bienvenida); }
+  setTimeout(()=>input.focus(), 50);
 }
 function cerrarChat(){ chat.classList.remove("open"); toggle.setAttribute("aria-expanded","false"); toggle.focus(); }
 toggle.onclick = () => chat.classList.contains("open") ? cerrarChat() : abrirChat();
@@ -360,69 +405,11 @@ $("#chatCerrar").onclick = cerrarChat;
 $("#abrirChatHero").onclick = abrirChat;
 document.addEventListener("keydown", e => { if (e.key === "Escape" && chat.classList.contains("open")) cerrarChat(); });
 
-function responder(i, mostrarPregunta){
-  const f = FAQ[i];
-  if (mostrarPregunta) burbuja(f.q, "user");
-  setTimeout(()=>{
-    burbuja(f.a());
-    if (f.lead){ iniciarLead(); } else { burbuja("¿Te ayudo con algo más?"); chips(); }
-  }, 350);
-}
-function iniciarLead(){ lead = {paso:"nombre"}; burbuja("¿Cuál es tu nombre?"); }
-
-const norm = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-function buscar(txt){
-  const t = norm(txt); let mejor = -1, puntos = 0;
-  FAQ.forEach((f,i)=>{ let p = 0; f.k.forEach(k=>{ if (t.includes(norm(k))) p += k.length > 6 ? 2 : 1; }); if (p > puntos){ puntos = p; mejor = i; } });
-  return mejor;
-}
-
-function botonesEnvio(){
-  const texto = `Hola Librerías Andinas 👋 (desde el chat de la web)\nNombre: ${lead.nombre}\nTeléfono: ${lead.telefono}\nConsulta: ${lead.consulta}`;
-  const box = document.createElement("div"); box.className = "envio";
-  const wa = document.createElement("button"); wa.type="button"; wa.className="btn btn-wa"; wa.textContent="Enviar por WhatsApp";
-  wa.onclick = ()=>{ abrir(waLink(texto)); burbuja("¡Listo! Te abrimos WhatsApp con tu mensaje. Solo presiona enviar ✅"); };
-  const ml = document.createElement("button"); ml.type="button"; ml.className="btn btn-mail"; ml.textContent="Enviar por correo";
-  ml.onclick = ()=>{ abrir(mailLink("Consulta desde el chat: " + lead.nombre, texto)); burbuja("¡Listo! Te abrimos tu correo con el mensaje. Solo presiona enviar ✅"); };
-  box.append(wa, ml); msgs.appendChild(box); msgs.scrollTop = msgs.scrollHeight;
-}
-
 $("#chatForm").addEventListener("submit", e => {
   e.preventDefault();
-  const inp = $("#chatInput"), txt = inp.value.trim(); if (!txt) return;
-  inp.value = ""; burbuja(txt, "user");
-
-  if (lead){
-    setTimeout(()=>{
-      if (lead.paso === "nombre"){ lead.nombre = txt; lead.paso = "telefono"; burbuja(`Gracias, ${txt.split(" ")[0]}. ¿A qué número de celular te contactamos?`); }
-      else if (lead.paso === "telefono"){
-        if (!/^[+\d\s-]{7,}$/.test(txt)){ burbuja("Ese número no parece válido. Escríbelo solo con números, por ejemplo 987654321."); return; }
-        lead.telefono = txt; lead.paso = "consulta"; burbuja("¿Qué necesitas? Cuéntame tu consulta o el libro que buscas.");
-      }
-      else if (lead.paso === "consulta"){
-        lead.consulta = txt; burbuja("Perfecto. Elige cómo enviarnos tus datos:"); botonesEnvio();
-        lead = Object.assign({}, lead, {paso:"hecho"});
-      }
-      else { lead = null; manejarTexto(txt); }
-    }, 300);
-    return;
-  }
-  manejarTexto(txt);
+  const txt = input.value.trim(); if (!txt || ocupado) return;
+  input.value = ""; burbuja(txt, "user"); enviarMensaje(txt);
 });
-
-function manejarTexto(txt){
-  const i = buscar(txt);
-  if (i >= 0) responder(i, false);
-  else setTimeout(()=>{ burbuja("No tengo esa respuesta todavía, pero un asesor puede ayudarte. Elige una opción:"); chips(); }, 300);
-}
-</script>
-  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
-<script type="module">
-	import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
-
-	createChat({
-		webhookUrl: 'https://jonathaneliel.app.n8n.cloud/webhook/libreria-chat-agente-0001/chat'
-	});
 </script>
 </body>
 </html>
