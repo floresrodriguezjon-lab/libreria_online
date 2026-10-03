@@ -416,5 +416,13 @@ function manejarTexto(txt){
   else setTimeout(()=>{ burbuja("No tengo esa respuesta todavía, pero un asesor puede ayudarte. Elige una opción:"); chips(); }, 300);
 }
 </script>
+  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+<script type="module">
+	import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+	createChat({
+		webhookUrl: 'https://jonathaneliel.app.n8n.cloud/webhook/libreria-chat-agente-0001/chat'
+	});
+</script>
 </body>
 </html>
